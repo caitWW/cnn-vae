@@ -235,7 +235,7 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
 
                 img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
                 vutils.save_image(img_cat,
-                                      "%s/%s/%s_%d_test.png" % (args.save_dir,
+                                      "%s/%s/%s_%d_test_%d.png" % (args.save_dir,
                                                                 "Results",
                                                                 args.model_name,
                                                                 args.image_size,

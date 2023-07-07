@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torchvision.utils as vutils
 import random
+from PIL import Image
 
 import os
 import shutil
@@ -86,14 +87,14 @@ print('num test_images:', len(test_ids))
 class ImageDiskLoader(torch.utils.data.Dataset):
 
     def __init__(self, im_ids):
-        self.transform = im_transform
+        self.transform = transform
         self.im_ids = im_ids
 
     def __len__(self):
         return len(self.im_ids)
 
     def __getitem__(self, idx):
-        im_path = IMAGE_PATH + self.im_ids[idx]
+        im_path = args.dataset_root + self.im_ids[idx]
         im = Image.open(im_path).convert('RGB')
         #im = crop(im, 30, 0, 178, 178)
         data = self.transform(im)

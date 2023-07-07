@@ -6,6 +6,7 @@ import torchvision.datasets as Datasets
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torchvision.utils as vutils
+import random
 
 import os
 import shutil
@@ -56,6 +57,59 @@ transform = transforms.Compose([transforms.Resize(args.image_size),
                                 transforms.ToTensor(),
                                 transforms.Normalize(0.5, 0.5)])
 
+def split_dataset():
+
+    train_im_ids = []
+    test_im_ids = []    
+
+    # Get all .png files in the folder
+    png_files = [file for file in os.listdir(args.dataset_root) if file.endswith('.png')]
+
+    # Shuffle the list of files randomly
+    random.shuffle(png_files)
+
+    # Calculate the split index for train/test
+    split_index = int(0.8 * len(png_files))  #80%training
+
+    # Assign 80% as train_im_ids and 20% as test_im_ids
+    train_im_ids = png_files[:split_index]
+    test_im_ids = png_files[split_index:]
+
+    return train_im_ids, test_im_ids
+
+# training code
+train_ids, test_ids = split_dataset()
+print('num train_images:', len(train_ids))
+print('num test_images:', len(test_ids))
+
+# heavy cpu load, light memory load
+class ImageDiskLoader(torch.utils.data.Dataset):
+
+    def __init__(self, im_ids):
+        self.transform = im_transform
+        self.im_ids = im_ids
+
+    def __len__(self):
+        return len(self.im_ids)
+
+    def __getitem__(self, idx):
+        im_path = IMAGE_PATH + self.im_ids[idx]
+        im = Image.open(im_path).convert('RGB')
+        #im = crop(im, 30, 0, 178, 178)
+        data = self.transform(im)
+
+        return data
+    
+data_train = ImageDiskLoader(train_ids)
+data_test = ImageDiskLoader(test_ids)
+
+kwargs = {'num_workers': 1,
+          'pin_memory': True} if use_cuda else {}
+
+train_loader = torch.utils.data.DataLoader(data_train, batch_size=args.batch_size, shuffle=True, **kwargs)
+test_loader = torch.utils.data.DataLoader(data_test, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+'''
 data_set = Datasets.ImageFolder(root=args.dataset_root, transform=transform)
 
 # Randomly split the dataset with a fixed random seed for reproducibility
@@ -67,6 +121,8 @@ train_set, test_set = torch.utils.data.random_split(data_set, [n_train_examples,
 
 train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
 test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
+
+'''
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)

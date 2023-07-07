@@ -238,7 +238,8 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                                       "%s/%s/%s_%d_test.png" % (args.save_dir,
                                                                 "Results",
                                                                 args.model_name,
-                                                                args.image_size),
+                                                                args.image_size,
+                                                                epoch),
                                       normalize=True)
 
                 # Keep a copy of the previous save in case we accidentally save a model that has exploded...

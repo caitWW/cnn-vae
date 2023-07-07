@@ -125,9 +125,11 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
 '''
 
+'''
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)
 test_images, _ = dataiter.next()
+'''
 
 # Create AE network.
 vae_net = VAE(channel_in=test_images.shape[1],

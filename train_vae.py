@@ -188,7 +188,7 @@ else:
 # Start training loop
 for epoch in trange(start_epoch, args.nepoch, leave=False):
     vae_net.train()
-    for i, (images, _) in enumerate(tqdm(train_loader, leave=False)):
+    for i, (images) in enumerate(tqdm(train_loader, leave=False)):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
         bs, c, h, w = images.shape

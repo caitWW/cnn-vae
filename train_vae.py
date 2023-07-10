@@ -18,6 +18,7 @@ import argparse
 import Helpers as hf
 from RES_VAE import VAE
 from vgg19 import VGG19
+import retina_transform as ret
 
 parser = argparse.ArgumentParser(description="Training Params")
 # string args

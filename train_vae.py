@@ -189,6 +189,10 @@ else:
 # Start training loop
 for epoch in trange(start_epoch, args.nepoch, leave=False):
     vae_net.train()
+    total_loss = 0.0
+    total_mse_loss = 0.0
+    total_batches = 0
+
     for i, (images) in enumerate(tqdm(train_loader, leave=False)):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
@@ -214,6 +218,15 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
         torch.nn.utils.clip_grad_norm_(vae_net.parameters(), 40)
         scaler.step(optimizer)
         scaler.update()
+
+        # Accumulate losses over the epoch
+        total_loss += loss.item()
+        total_mse_loss += mse_loss.item()
+        total_batches += 1
+
+        avg_loss = total_loss / total_batches
+        avg_mse_loss = total_mse_loss / total_batches
+        print(f'Epoch: {epoch+1}, Avg Loss: {avg_loss}, Avg MSE Loss: {avg_mse_loss}')
 
         # Log losses and other metrics for evaluation!
         data_logger["mu"].append(mu.mean().item())

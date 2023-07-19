@@ -270,3 +270,36 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
 
             # Set the model back into training mode!!
             vae_net.train()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+dataiter = iter(train_loader)
+images, _ = next(dataiter)
+print(len(dataiter))
+print(images.shape)
+
+recon_img, mu, logvar = vae_net(images)
+
+# Select number of pairs to visualize
+num_images = 5
+
+fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
+
+for i in range(num_images):
+    # Display original images
+    ax = axes[0, i]
+    ax.imshow(images[i], interpolation='nearest')
+    ax.set_title("Original")
+    ax.axis('off')
+
+    # Display reconstructed images
+    ax = axes[1, i]
+    ax.imshow(recon_img[i], interpolation='nearest')
+    ax.set_title("Reconstruction")
+    ax.axis('off')
+
+# Save the figure to a file
+plt.savefig('output.png')
+
+

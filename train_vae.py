@@ -276,6 +276,7 @@ import matplotlib.pyplot as plt
 
 dataiter = iter(train_loader)
 images = next(dataiter)
+images = images.float()
 print(len(dataiter))
 print(images.dtype)
 

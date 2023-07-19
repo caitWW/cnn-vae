@@ -275,7 +275,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dataiter = iter(train_loader)
-images, _ = next(dataiter)
+images = next(dataiter)
 print(len(dataiter))
 print(images.shape)
 

@@ -280,7 +280,11 @@ images = images.float()
 print(len(dataiter))
 print(images.dtype)
 
+images = images.cpu().numpy()
+
 recon_img, mu, logvar = vae_net(images)
+
+recon_img = recon_img.detach().cpu().numpy()
 
 # Select number of pairs to visualize
 num_images = 5

@@ -277,7 +277,7 @@ import matplotlib.pyplot as plt
 dataiter = iter(train_loader)
 images = next(dataiter)
 print(len(dataiter))
-print(images.shape)
+print(images.dtype)
 
 recon_img, mu, logvar = vae_net(images)
 

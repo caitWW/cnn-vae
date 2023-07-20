@@ -276,15 +276,11 @@ import matplotlib.pyplot as plt
 
 dataiter = iter(train_loader)
 images = next(dataiter)
-images = images.float()
+images = images.to(device)
 print(len(dataiter))
-print(images.dtype)
-
-images = images.cpu().numpy()
+print(images.shape)
 
 recon_img, mu, logvar = vae_net(images)
-
-recon_img = recon_img.detach().cpu().numpy()
 
 # Select number of pairs to visualize
 num_images = 5

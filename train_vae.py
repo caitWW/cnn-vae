@@ -276,7 +276,7 @@ import matplotlib.pyplot as plt
 
 dataiter = iter(train_loader)
 images = next(dataiter)
-images = images.to(device)
+images = images.cpu.to(device)
 print(len(dataiter))
 print(images.shape)
 

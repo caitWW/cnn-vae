@@ -130,6 +130,8 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(train_loader)
 test_images = next(dataiter)[0]
+resize_transform = transforms.Resize((320, 240))
+original_size_image = resize_transform(test_images)
 vutils.save_image(test_images, "test_image.png", normalize=True)
 
 

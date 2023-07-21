@@ -288,8 +288,8 @@ def plot_reconstructions(model, dataloader, num_images=3):
         images = images.cpu()
         reconstructions = reconstructions.cpu()
 
-        images = (images*0.5) + 0.5
-        reconstructions = (reconstructions * 0.5) + 0.5
+        images = images / 255.0
+        reconstructions = reconstructions / 255.0
 
         # plot the original and reconstructed images
         fig, ax = plt.subplots(2, num_images, figsize=(num_images * 2, 4))

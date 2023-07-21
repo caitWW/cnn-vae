@@ -288,15 +288,15 @@ def plot_reconstructions(model, dataloader, num_images=10):
         images = images.cpu()
         reconstructions = reconstructions.cpu()
 
-        images = (images+1)/2
-        reconstructions = (reconstructions+1)/2
+        images = (images*0.5) + 0.5
+        reconstructions = (reconstructions * 0.5) + 0.5
 
         # plot the original and reconstructed images
         fig, ax = plt.subplots(2, num_images, figsize=(num_images * 2, 4))
 
         for i in range(num_images):
-            ax[0, i].imshow(images[i].permute(1, 2, 0))  # permute to move channels last
-            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0))
+            ax[0, i].imshow(images[i].permute(1, 2, 0).numpy())  # permute to move channels last
+            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0).numpy())
             ax[0, i].axis('off')
             ax[1, i].axis('off')
         

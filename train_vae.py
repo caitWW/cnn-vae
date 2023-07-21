@@ -271,43 +271,38 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
             # Set the model back into training mode!!
             vae_net.train()
 
-import numpy as np
 import matplotlib.pyplot as plt
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+def plot_reconstructions(model, dataloader, num_images=10):
+    model.eval()
+    with torch.no_grad():
+        # get some test images
+        dataiter = iter(dataloader)
+        images = next(dataiter)[:num_images]  # only take num_images images
+        images = images.to(device)
 
-dataiter = iter(train_loader)
-images = next(dataiter)
-images = images.to(device)
-print(len(dataiter))
-print(images.shape)
+        # reconstruct the images
+        reconstructions, _, _ = model(images)
 
-recon_img, mu, logvar = vae_net(images)
+        # move images and reconstructions to cpu
+        images = images.cpu()
+        reconstructions = reconstructions.cpu()
 
-# Select number of pairs to visualize
-num_images = 5
+        images = (images+1)/2
+        reconstructions = (reconstructions+1)/2
 
-fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
+        # plot the original and reconstructed images
+        fig, ax = plt.subplots(2, num_images, figsize=(num_images * 2, 4))
 
-# Move tensor to CPU and convert it to numpy array, transpose from (C,H,W) to (H,W,C) for imshow
-images = images.cpu().numpy().transpose((0, 2, 3, 1))
+        for i in range(num_images):
+            ax[0, i].imshow(images[i].permute(1, 2, 0))  # permute to move channels last
+            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0))
+            ax[0, i].axis('off')
+            ax[1, i].axis('off')
+        
+        plt.show()
 
-for i in range(num_images):
-    # Display original images
-    ax = axes[0, i]
-    ax.imshow(images[i], interpolation='nearest')
-    ax.set_title("Original")
-    ax.axis('off')
+plot_reconstructions(vae_net, test_loader)
 
-    # Display reconstructed images
-    recon_img_np = recon_img[i].cpu().detach().numpy() # Convert tensor to numpy
-    recon_img_np = np.transpose(recon_img_np, (1, 2, 0)) # Transpose from (C,H,W) to (H,W,C)
-    ax = axes[1, i]
-    ax.imshow(recon_img_np, interpolation='nearest')
-    ax.set_title("Reconstruction")
-    ax.axis('off')
-
-# Save the figure to a file
-plt.savefig('output.png')
 
 

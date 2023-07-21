@@ -273,7 +273,7 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
 
 import matplotlib.pyplot as plt
 
-def plot_reconstructions(model, dataloader, num_images=10):
+def plot_reconstructions(model, dataloader, num_images=3):
     model.eval()
     with torch.no_grad():
         # get some test images

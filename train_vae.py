@@ -6,6 +6,7 @@ import torchvision.datasets as Datasets
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torchvision.utils as vutils
+import matplotlib.pyplot as plt
 import random
 from PIL import Image
 
@@ -128,7 +129,10 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)
-test_images = next(dataiter)
+test_images = next(dataiter)[:2]
+plt.imshow(test_images[0].permute(1, 2, 0))
+plt.show()
+plt.savefig('original.png')
 
 
 # Create AE network.
@@ -279,8 +283,6 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
 
             # Set the model back into training mode!!
             vae_net.train()
-
-import matplotlib.pyplot as plt
 
 def plot_reconstructions(model, dataloader, num_images=3):
     model.eval()

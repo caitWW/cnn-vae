@@ -274,9 +274,11 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
 import numpy as np
 import matplotlib.pyplot as plt
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 dataiter = iter(train_loader)
 images = next(dataiter)
-images = images.cpu().numpy()
+images = images.to(device)
 print(len(dataiter))
 print(images.shape)
 
@@ -288,7 +290,7 @@ num_images = 5
 fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
 
 # Move tensor to CPU and convert it to numpy array, transpose from (C,H,W) to (H,W,C) for imshow
-images = images.transpose((0, 2, 3, 1))
+images = images.cpu().numpy().transpose((0, 2, 3, 1))
 
 for i in range(num_images):
     # Display original images

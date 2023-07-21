@@ -246,8 +246,8 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                 data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
                                                                    test_images.to(device)).item())
                 
-                orig = test_images[0]
-                rec = recon_img.cpu()[0]
+                orig = test_images[0].float()
+                rec = recon_img.cpu()[0].float()
                 vutils.save_image(orig, 
                           f"{args.save_dir}/Results/{args.model_name}_{args.image_size}_orig_test_{epoch}.png", 
                           normalize=True)

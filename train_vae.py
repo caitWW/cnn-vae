@@ -301,6 +301,7 @@ def plot_reconstructions(model, dataloader, num_images=10):
             ax[1, i].axis('off')
         
         plt.show()
+        plt.savefig('output2.png')
 
 plot_reconstructions(vae_net, test_loader)
 

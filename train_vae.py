@@ -245,6 +245,15 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                 recon_img, mu, log_var = vae_net(test_images.to(device))
                 data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
                                                                    test_images.to(device)).item())
+                
+                orig = test_images[0]
+                rec = recon_img.cpu()[0]
+                vutils.save_image(orig, 
+                          f"{args.save_dir}/Results/{args.model_name}_{args.image_size}_orig_test_{epoch}.png", 
+                          normalize=True)
+                vutils.save_image(rec, 
+                          f"{args.save_dir}/Results/{args.model_name}_{args.image_size}_rec_test_{epoch}.png", 
+                          normalize=True)
 
                 img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
                 vutils.save_image(img_cat,

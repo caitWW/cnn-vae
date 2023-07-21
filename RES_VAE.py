@@ -119,7 +119,7 @@ class Decoder(nn.Module):
         x = self.res_up_block2(x)  # 16
         x = self.res_up_block3(x)  # 32
         x = self.res_up_block4(x)  # 64
-        x = torch.tanh(self.conv_out(x))
+        x = torch.sigmoid(self.conv_out(x))
 
         return x 
 

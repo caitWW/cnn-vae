@@ -276,7 +276,7 @@ import matplotlib.pyplot as plt
 
 dataiter = iter(train_loader)
 images = next(dataiter)
-images = images.cpu().to(device)
+images = images.cpu().numpy()
 print(len(dataiter))
 print(images.shape)
 
@@ -287,6 +287,9 @@ num_images = 5
 
 fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
 
+# Move tensor to CPU and convert it to numpy array, transpose from (C,H,W) to (H,W,C) for imshow
+images = images.transpose((0, 2, 3, 1))
+
 for i in range(num_images):
     # Display original images
     ax = axes[0, i]
@@ -295,8 +298,10 @@ for i in range(num_images):
     ax.axis('off')
 
     # Display reconstructed images
+    recon_img_np = recon_img[i].cpu().detach().numpy() # Convert tensor to numpy
+    recon_img_np = np.transpose(recon_img_np, (1, 2, 0)) # Transpose from (C,H,W) to (H,W,C)
     ax = axes[1, i]
-    ax.imshow(recon_img[i], interpolation='nearest')
+    ax.imshow(recon_img_np, interpolation='nearest')
     ax.set_title("Reconstruction")
     ax.axis('off')
 

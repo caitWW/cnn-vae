@@ -295,13 +295,13 @@ def plot_reconstructions(model, dataloader, num_images=3):
         fig, ax = plt.subplots(2, num_images, figsize=(num_images * 3, 6))
 
         for i in range(num_images):
-            ax[0, i].imshow(images[i].permute(1, 2, 0).numpy(), interpolation='bilinear')  # permute to move channels last
-            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0).numpy(), interpolation='bilinear')
+            ax[0, i].imshow(images[i].permute(1, 2, 0).numpy())  # permute to move channels last
+            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0).numpy())
             ax[0, i].axis('off')
             ax[1, i].axis('off')
         
         plt.show()
-        plt.savefig('output2.png')
+        plt.savefig('output2.png', dpi = 300)
 
 plot_reconstructions(vae_net, test_loader)
 

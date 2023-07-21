@@ -129,10 +129,8 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(train_loader)
-test_images = next(dataiter)[:2]
-plt.imshow(test_images[0].permute(1, 2, 0))
-plt.show()
-plt.savefig('original.png')
+test_images = next(dataiter)[0]
+vutils.save_image(test_images, "test_image.png", normalize=True)
 
 
 # Create AE network.

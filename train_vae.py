@@ -53,8 +53,8 @@ device = torch.device(args.device_index if use_cuda else "cpu")
 
 # Create dataloaders
 # This code assumes there is no pre-defined test/train split and will create one for you
-transform = transforms.Compose([transforms.Resize(args.image_size),
-                                transforms.CenterCrop(args.image_size),
+transform = transforms.Compose([# transforms.Resize(args.image_size),
+                                # transforms.CenterCrop(args.image_size),
                                 transforms.RandomHorizontalFlip(0.5),
                                 transforms.ToTensor(),
                                 transforms.Normalize(0.5, 0.5)])

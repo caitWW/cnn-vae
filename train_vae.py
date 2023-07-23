@@ -6,7 +6,6 @@ import torchvision.datasets as Datasets
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 import torchvision.utils as vutils
-import matplotlib.pyplot as plt
 import random
 from PIL import Image
 
@@ -53,8 +52,8 @@ device = torch.device(args.device_index if use_cuda else "cpu")
 
 # Create dataloaders
 # This code assumes there is no pre-defined test/train split and will create one for you
-transform = transforms.Compose([# transforms.Resize(args.image_size),
-                                # transforms.CenterCrop(args.image_size),
+transform = transforms.Compose([transforms.Resize(args.image_size),
+                                transforms.CenterCrop(args.image_size),
                                 transforms.RandomHorizontalFlip(0.5),
                                 transforms.ToTensor(),
                                 transforms.Normalize(0.5, 0.5)])
@@ -128,11 +127,8 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
-dataiter = iter(train_loader)
-test_images = next(dataiter)[0]
-resize_transform = transforms.Resize((320, 240))
-original_size_image = resize_transform(test_images)
-vutils.save_image(test_images, "test_image.png", normalize=True)
+dataiter = iter(test_loader)
+test_images = next(dataiter)
 
 
 # Create AE network.
@@ -249,15 +245,6 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                 recon_img, mu, log_var = vae_net(test_images.to(device))
                 data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
                                                                    test_images.to(device)).item())
-                
-                orig = test_images[0].float()
-                rec = recon_img.cpu()[0].float()
-                vutils.save_image(orig, 
-                          f"{args.save_dir}/Results/{args.model_name}_{args.image_size}_orig_test_{epoch}.png", 
-                          normalize=True)
-                vutils.save_image(rec, 
-                          f"{args.save_dir}/Results/{args.model_name}_{args.image_size}_rec_test_{epoch}.png", 
-                          normalize=True)
 
                 img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
                 vutils.save_image(img_cat,
@@ -284,37 +271,47 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
             # Set the model back into training mode!!
             vae_net.train()
 
-def plot_reconstructions(model, dataloader, num_images=3):
-    model.eval()
-    with torch.no_grad():
-        # get some test images
-        dataiter = iter(dataloader)
-        images = next(dataiter)[:num_images]  # only take num_images images
-        images = images.to(device)
+'''
 
-        # reconstruct the images
-        reconstructions, _, _ = model(images)
+import numpy as np
+import matplotlib.pyplot as plt
 
-        # move images and reconstructions to cpu
-        images = images.cpu()
-        reconstructions = reconstructions.cpu()
+dataiter = iter(train_loader)
+images = next(dataiter)
+images = images.cpu().numpy()
+print(len(dataiter))
+print(images.shape)
 
-        images = (images*0.5) + 0.5
-        reconstructions = (reconstructions * 0.5) + 0.5
+recon_img, mu, logvar = vae_net(images)
 
-        # plot the original and reconstructed images
-        fig, ax = plt.subplots(2, num_images, figsize=(num_images * 3, 6))
+# Select number of pairs to visualize
+num_images = 5
 
-        for i in range(num_images):
-            ax[0, i].imshow(images[i].permute(1, 2, 0).numpy())  # permute to move channels last
-            ax[1, i].imshow(reconstructions[i].permute(1, 2, 0).numpy())
-            ax[0, i].axis('off')
-            ax[1, i].axis('off')
-        
-        plt.show()
-        plt.savefig('output2.png', dpi = 300)
+fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
 
-plot_reconstructions(vae_net, test_loader)
+# Move tensor to CPU and convert it to numpy array, transpose from (C,H,W) to (H,W,C) for imshow
+images = images.transpose((0, 2, 3, 1))
+
+for i in range(num_images):
+    # Display original images
+    ax = axes[0, i]
+    ax.imshow(images[i], interpolation='nearest')
+    ax.set_title("Original")
+    ax.axis('off')
+
+    # Display reconstructed images
+    recon_img_np = recon_img[i].cpu().detach().numpy() # Convert tensor to numpy
+    recon_img_np = np.transpose(recon_img_np, (1, 2, 0)) # Transpose from (C,H,W) to (H,W,C)
+    ax = axes[1, i]
+    ax.imshow(recon_img_np, interpolation='nearest')
+    ax.set_title("Reconstruction")
+    ax.axis('off')
+
+# Save the figure to a file
+plt.savefig('output.png')
 
 
 
+
+
+'''

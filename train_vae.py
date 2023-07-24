@@ -146,7 +146,7 @@ vae_net = VAE(channel_in=test_images.shape[1],
 optimizer = optim.Adam(vae_net.parameters(), lr=args.lr)
 
 # AMP Scaler
-scaler = torch.cuda.amp.GradScaler()
+# scaler = torch.cuda.amp.GradScaler()
 
 # Create the feature loss module if required
 if args.feature_scale > 0:

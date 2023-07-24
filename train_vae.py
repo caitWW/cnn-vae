@@ -49,7 +49,7 @@ args = parser.parse_args()
 use_cuda = torch.cuda.is_available()
 device = torch.device(args.device_index if use_cuda else "cpu")
 
-torch.cuda.memory_summary(device=None, abbreviated=False)
+print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
 # Create dataloaders
 # This code assumes there is no pre-defined test/train split and will create one for you

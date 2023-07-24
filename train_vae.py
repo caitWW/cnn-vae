@@ -47,8 +47,8 @@ parser.add_argument("--load_checkpoint", '-cp', action='store_true', help="Load 
 args = parser.parse_args()
 
 use_cuda = torch.cuda.is_available()
-# device = torch.device(args.device_index if use_cuda else "cpu")
-device = torch.device("cpu")
+device = torch.device(args.device_index if use_cuda else "cpu")
+
 
 # Create dataloaders
 # This code assumes there is no pre-defined test/train split and will create one for you
@@ -146,7 +146,7 @@ vae_net = VAE(channel_in=test_images.shape[1],
 optimizer = optim.Adam(vae_net.parameters(), lr=args.lr)
 
 # AMP Scaler
-# scaler = torch.cuda.amp.GradScaler()
+scaler = torch.cuda.amp.GradScaler()
 
 # Create the feature loss module if required
 if args.feature_scale > 0:
@@ -204,31 +204,25 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
         bs, c, h, w = images.shape
 
         # We will train with mixed precision!
-        # with torch.cuda.amp.autocast():
+        with torch.cuda.amp.autocast():
+            recon_img, mu, log_var = vae_net(images)
 
-        recon_img, mu, log_var = vae_net(images)
+            kl_loss = hf.kl_loss(mu, log_var)
+            mse_loss = F.mse_loss(recon_img, images)
+            loss = args.kl_scale * kl_loss + mse_loss
 
-        kl_loss = hf.kl_loss(mu, log_var)
-        mse_loss = F.mse_loss(recon_img, images)
-        loss = args.kl_scale * kl_loss + mse_loss
-
-        # Perception loss
-        if args.feature_scale > 0:
+            # Perception loss
+            if args.feature_scale > 0:
                 feat_in = torch.cat((recon_img, images), 0)
                 feature_loss = feature_extractor(feat_in)
                 loss += args.feature_scale * feature_loss
-        
-        '''
+
         optimizer.zero_grad()
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(vae_net.parameters(), 40)
         scaler.step(optimizer)
         scaler.update()
-        '''
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(vae_net.parameters(), 40)
-        optimizer.step()
 
         # Accumulate losses over the epoch
         total_loss += loss.item()
@@ -252,14 +246,14 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
             # In eval mode the model will use mu as the encoding instead of sampling from the distribution
         vae_net.eval()
         with torch.no_grad():
-            # with torch.cuda.amp.autocast():
+            with torch.cuda.amp.autocast():
                 # Save an example from testing and log a test loss
-            recon_img, mu, log_var = vae_net(test_images.to(device))
-            data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
+                recon_img, mu, log_var = vae_net(test_images.to(device))
+                data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
                                                                    test_images.to(device)).item())
 
-            img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
-            vutils.save_image(img_cat,
+                img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
+                vutils.save_image(img_cat,
                                       "%s/%s/%s_%d_test_%d.png" % (args.save_dir,
                                                                 "Results",
                                                                 args.model_name,

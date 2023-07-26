@@ -29,7 +29,7 @@ nepoch = 100
 start_epoch = 0
 #dataset_root = "/media/luke/Quick Storage/Data"
 #dataset_root = "/scratch/gpfs/qh8777/qhhome/celebA"
-save_dir = "/home/qw3971/cnn-vae/test/"
+save_dir = "/home/qw3971/cnn-vae/test_shifted/"
 model_name = "test_run"
 load_checkpoint = True
 
@@ -42,7 +42,7 @@ device
 device = torch.device("cpu")
 device
 
-dataset_root = '/home/qw3971/clevr/image_generation/new_transform/'
+dataset_root = '/home/qw3971/clevr/image_generation/new_transform_shifted/'
 transform = transforms.Compose([# transforms.Resize(image_size),
                                 # transforms.CenterCrop(image_size),
                                 transforms.RandomHorizontalFlip(0.5),
@@ -161,12 +161,18 @@ for images, image_ids in train_loader:
     with torch.no_grad():
         recon_img, _, _ = vae_net(images)
 
-    for i in range(images.shape[0]):
-        image_id = image_ids[i]
+    '''
+    image_id = image_ids[i]
 
-        fixation = fixation_data[image_id]
-        x_fixation = fixation['xc']
-        y_fixation = fixation['yc'] 
+    fixation = fixation_data[image_id]
+    x_fixation = fixation['xc']
+    y_fixation = fixation['yc'] 
+    '''
+
+    x_fixation = 160
+    y_fixation = 120
+
+    for i in range(images.shape[0]):
 
         # Create coordinate arrays
         Y, X = np.ogrid[:240, :320]

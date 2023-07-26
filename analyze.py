@@ -29,7 +29,7 @@ nepoch = 100
 start_epoch = 0
 #dataset_root = "/media/luke/Quick Storage/Data"
 #dataset_root = "/scratch/gpfs/qh8777/qhhome/celebA"
-save_dir = "/Users/cw/Desktop/2023 Research/EXPERIMENTS/test_checkpoint"
+save_dir = "/home/qw3971/cnn-vae/test/"
 model_name = "test_run"
 load_checkpoint = True
 
@@ -42,7 +42,7 @@ device
 device = torch.device("cpu")
 device
 
-dataset_root = '/Users/cw/Desktop/2023 Research/EXPERIMENTS/retina1/'
+dataset_root = '/home/qw3971/clevr/image_generation/new_transform/'
 transform = transforms.Compose([# transforms.Resize(image_size),
                                 # transforms.CenterCrop(image_size),
                                 transforms.RandomHorizontalFlip(0.5),
@@ -145,7 +145,7 @@ diff_image_accumulator = np.zeros((240, 320))  # assuming your images are square
 # Initialize a counter for the number of images processed
 num_images = 0
 
-with open('retina_data.json', 'r') as f:
+with open('/home/qw3971/cv-2023/retina_data.json', 'r') as f:
     fixation_data = json.load(f)
 
 # Initialize empty lists to hold all distance and error values

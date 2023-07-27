@@ -259,6 +259,17 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                                                                 args.image_size,
                                                                 epoch),
                                       normalize=True)
+                # Only save images on the final epoch
+                if epoch == args.nepoch - 1:
+                    for i in range(recon_img.size(0)):
+                        vutils.save_image(recon_img[i],
+                                      "%s/%s/%s_%d_test_%d_%d.png" % (args.save_dir,
+                                                                       "Recon",
+                                                                       args.model_name,
+                                                                       args.image_size,
+                                                                       epoch,
+                                                                       i),
+                                      normalize=True)
 
                 # Keep a copy of the previous save in case we accidentally save a model that has exploded...
             if os.path.isfile(args.save_dir + "/Models/" + save_file_name + ".pt"):

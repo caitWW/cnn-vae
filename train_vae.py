@@ -104,7 +104,7 @@ class ImageDiskLoader(torch.utils.data.Dataset):
         #im = crop(im, 30, 0, 178, 178)
         data = self.transform(im)
 
-        return data
+        return data, self.im_ids[idx]
     
 data_train = ImageDiskLoader(train_ids)
 data_test = ImageDiskLoader(test_ids)
@@ -133,7 +133,12 @@ test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)
-test_images = next(dataiter)
+test_images, image_ids = next(dataiter) 
+
+import json
+
+with open('/home/qw3971/cnn-vae/test/ids', 'w') as json_file:
+    json.dump(image_ids, json_file)
 
 
 # Create AE network.
@@ -162,6 +167,20 @@ if not os.path.isdir(args.save_dir + "/Models"):
     os.makedirs(args.save_dir + "/Models")
 if not os.path.isdir(args.save_dir + "/Results"):
     os.makedirs(args.save_dir + "/Results")
+if not os.path.isdir(args.save_dir + "/Recon"):
+    os.makedirs(args.save_dir + "/Recon")
+if not os.path.isdir(args.save_dir + "/Original"):
+    os.makedirs(args.save_dir + "/Original")
+
+for i in range(test_images.size(0)):
+                        vutils.save_image(test_images[i],
+                                      "%s/%s/%s_%d_test_%d_%d.png" % (args.save_dir,
+                                                                       "Original",
+                                                                       args.model_name,
+                                                                       args.image_size,
+                                                                       1,
+                                                                       i),
+                                      normalize=True)
 
 # Checks if a checkpoint has been specified to load, if it has, it loads the checkpoint
 # If no checkpoint is specified, it checks if a checkpoint already exists and raises an error if

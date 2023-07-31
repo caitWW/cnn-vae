@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser(description="Training Params")
 # string args
 parser.add_argument("--model_name", "-mn", help="Experiment save name", type=str, required=True)
 parser.add_argument("--dataset_root", "-dr", help="Dataset root dir", type=str, required=True)
+parser.add_argument("--target_root", "-tr", help="Target root dir", type=str, required=True)
 
 parser.add_argument("--save_dir", "-sd", help="Root dir for saving model and data", type=str, default=".")
 
@@ -59,20 +60,18 @@ transform = transforms.Compose([transforms.Resize(args.image_size),
                                 transforms.Normalize(0.5, 0.5)])
 '''
 
-transform = transforms.Compose([transforms.RandomHorizontalFlip(0.5),
-                                transforms.ToTensor(),
-                                transforms.Normalize(0.5, 0.5)])
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0.5, 0.5)])
 
-def split_dataset():
+def split_dataset(files):
 
     train_im_ids = []
     test_im_ids = []    
 
     # Get all .png files in the folder
-    png_files = [file for file in os.listdir(args.dataset_root) if file.endswith('.png')]
+    png_files = files
 
     # Shuffle the list of files randomly
-    random.shuffle(png_files)
+    # random.shuffle(png_files)
 
     # Calculate the split index for train/test
     split_index = int(0.8 * len(png_files))  #80%training
@@ -84,9 +83,13 @@ def split_dataset():
     return train_im_ids, test_im_ids
 
 # training code
-train_ids, test_ids = split_dataset()
+train_files = sorted([file for file in os.listdir(args.dataset_root) if file.endswith('.png')])
+train_ids, test_ids = split_dataset(train_files)
 print('num train_images:', len(train_ids))
 print('num test_images:', len(test_ids))
+
+target_files = sorted([file for file in os.listdir(args.target_root) if file.endswith('.png')])
+target_ids, target_test_ids = split_dataset(target_files)
 
 # heavy cpu load, light memory load
 class ImageDiskLoader(torch.utils.data.Dataset):
@@ -108,38 +111,23 @@ class ImageDiskLoader(torch.utils.data.Dataset):
     
 data_train = ImageDiskLoader(train_ids)
 data_test = ImageDiskLoader(test_ids)
+data_target =  ImageDiskLoader(target_ids)
+data_target_test =  ImageDiskLoader(target_test_ids)
 
 kwargs = {'num_workers': 1,
           'pin_memory': True} if use_cuda else {}
 
-train_loader = torch.utils.data.DataLoader(data_train, batch_size=args.batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(data_test, batch_size=args.batch_size, shuffle=True, **kwargs)
-
-'''
-data_set = Datasets.ImageFolder(root=args.dataset_root, transform=transform)
-
-# Randomly split the dataset with a fixed random seed for reproducibility
-test_split = 0.9
-n_train_examples = int(len(data_set) * test_split)
-n_test_examples = len(data_set) - n_train_examples
-train_set, test_set = torch.utils.data.random_split(data_set, [n_train_examples, n_test_examples],
-                                                    generator=torch.Generator().manual_seed(42))
-
-train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
-test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
-
-'''
-
+train_loader = torch.utils.data.DataLoader(data_train, batch_size=args.batch_size, shuffle=False, **kwargs)
+test_loader = torch.utils.data.DataLoader(data_test, batch_size=args.batch_size, shuffle=False, **kwargs)
+target_loader = torch.utils.data.DataLoader(data_target, batch_size=args.batch_size, shuffle=False, **kwargs)
+target_test_loader = torch.utils.data.DataLoader(data_target_test, batch_size=args.batch_size, shuffle=False, **kwargs)
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)
 test_images, image_ids = next(dataiter) 
 
-import json
-
-with open('/home/qw3971/cnn-vae/test/ids', 'w') as json_file:
-    json.dump(image_ids, json_file)
-
+dataiter = iter(target_test_loader)
+target_test_images, target_test_image_ids = next(dataiter) 
 
 # Create AE network.
 vae_net = VAE(channel_in=test_images.shape[1],
@@ -171,6 +159,15 @@ if not os.path.isdir(args.save_dir + "/Recon"):
     os.makedirs(args.save_dir + "/Recon")
 if not os.path.isdir(args.save_dir + "/Original"):
     os.makedirs(args.save_dir + "/Original")
+
+import json
+
+with open('/home/qw3971/cnn-vae/run2_saccade.json', 'r') as json_file:
+    saccade_dict = json.load(json_file)
+
+# Convert to list and then to tensor
+saccade_list = [value for value in saccade_dict.values()]
+saccade_tensor = torch.tensor(saccade_list, dtype=torch.float32)
 
 for i in range(test_images.size(0)):
                         vutils.save_image(test_images[i],
@@ -216,22 +213,32 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
     total_mse_loss = 0.0
     total_batches = 0
 
-    for i, (images) in enumerate(tqdm(train_loader, leave=False)):
+    # Whether to train with SaccadeNet
+    train_with_saccade = epoch >= 1 
+
+    for i, ((images, ids), (target_images, target_ids)) in enumerate(tqdm(zip(train_loader, target_loader), 
+                                                            total = len(train_loader),  leave=False)):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
+        target_images = target_images.to(device)
         bs, c, h, w = images.shape
-
+        
         # We will train with mixed precision!
         with torch.cuda.amp.autocast():
-            recon_img, mu, log_var = vae_net(images)
+            if train_with_saccade:
+                recon_img, mu, log_var = vae_net(images, saccade_tensor)
+
+            else:
+                dummy_saccade_data = torch.zeros_like(images)
+                recon_img, mu, log_var = vae_net(images, dummy_saccade_data)
 
             kl_loss = hf.kl_loss(mu, log_var)
-            mse_loss = F.mse_loss(recon_img, images)
+            mse_loss = F.mse_loss(recon_img, target_images)
             loss = args.kl_scale * kl_loss + mse_loss
 
             # Perception loss
             if args.feature_scale > 0:
-                feat_in = torch.cat((recon_img, images), 0)
+                feat_in = torch.cat((recon_img, target_images), 0)
                 feature_loss = feature_extractor(feat_in)
                 loss += args.feature_scale * feature_loss
 
@@ -268,9 +275,9 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                 # Save an example from testing and log a test loss
                 recon_img, mu, log_var = vae_net(test_images.to(device))
                 data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
-                                                                   test_images.to(device)).item())
+                                                                   target_test_images.to(device)).item())
 
-                img_cat = torch.cat((recon_img.cpu(), test_images), 2).float()
+                img_cat = torch.cat((recon_img.cpu(), target_test_images), 2).float()
                 vutils.save_image(img_cat,
                                       "%s/%s/%s_%d_test_%d.png" % (args.save_dir,
                                                                 "Results",
@@ -304,49 +311,4 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
                         }, args.save_dir + "/Models/" + save_file_name + ".pt")
 
             # Set the model back into training mode!!
-            vae_net.train()
-
-'''
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-dataiter = iter(train_loader)
-images = next(dataiter)
-images = images.cpu().numpy()
-print(len(dataiter))
-print(images.shape)
-
-recon_img, mu, logvar = vae_net(images)
-
-# Select number of pairs to visualize
-num_images = 5
-
-fig, axes = plt.subplots(2, num_images, figsize=(15, 5))
-
-# Move tensor to CPU and convert it to numpy array, transpose from (C,H,W) to (H,W,C) for imshow
-images = images.transpose((0, 2, 3, 1))
-
-for i in range(num_images):
-    # Display original images
-    ax = axes[0, i]
-    ax.imshow(images[i], interpolation='nearest')
-    ax.set_title("Original")
-    ax.axis('off')
-
-    # Display reconstructed images
-    recon_img_np = recon_img[i].cpu().detach().numpy() # Convert tensor to numpy
-    recon_img_np = np.transpose(recon_img_np, (1, 2, 0)) # Transpose from (C,H,W) to (H,W,C)
-    ax = axes[1, i]
-    ax.imshow(recon_img_np, interpolation='nearest')
-    ax.set_title("Reconstruction")
-    ax.axis('off')
-
-# Save the figure to a file
-plt.savefig('output.png')
-
-
-
-
-
-'''
+            vae_net.train() 

@@ -52,6 +52,19 @@ class ResUp(nn.Module):
         x = self.conv2(x)
 
         return self.act_fnc(self.bn2(x + skip))
+    
+class SaccadeNet(nn.Module):
+    def __init__(self, latent_channels, saccade_dim):
+        super(SaccadeNet, self).__init__()
+        self.fc1 = nn.Linear(latent_channels + saccade_dim, latent_channels) # Adjust size as needed
+        self.fc2 = nn.Linear(latent_channels, latent_channels) # Adjust size as needed
+        self.act_fnc = nn.ReLU() # You can use another activation function if you prefer
+
+    def forward(self, latent_vec, saccade_vec):
+        x = torch.cat((latent_vec, saccade_vec), dim=1)
+        x = self.act_fnc(self.fc1(x))
+        x = self.fc2(x)
+        return x
 
 
 class Encoder(nn.Module):
@@ -128,7 +141,7 @@ class VAE(nn.Module):
     """
     VAE network, uses the above encoder and decoder blocks
     """
-    def __init__(self, channel_in=3, ch=64, latent_channels=512):
+    def __init__(self, channel_in=3, ch=64, latent_channels=512, saccade_dim=2):
         super(VAE, self).__init__()
         """Res VAE Network
         channel_in  = number of channels of the image 
@@ -138,8 +151,22 @@ class VAE(nn.Module):
         
         self.encoder = Encoder(channel_in, ch=ch, latent_channels=latent_channels)
         self.decoder = Decoder(channel_in, ch=ch, latent_channels=latent_channels)
+        self.saccade_net = SaccadeNet(latent_channels=latent_channels, saccade_dim=saccade_dim)
 
-    def forward(self, x):
+    def forward(self, x, saccade_vectors):
         encoding, mu, log_var = self.encoder(x)
-        recon_img = self.decoder(encoding)
+
+         # Flatten encoding to a 1D vector
+        mu_flat = mu.view(mu.size(0), -1)
+        
+        # Pass the flattened mu and saccade through the SaccadeNet
+        new_latent_flat = self.saccade_net(mu_flat, saccade_vectors)
+        
+        # Reshape the new latent back to the original mu shape
+        new_latent = new_latent_flat.view(mu.size())
+        
+        # Pass the new latent vector through the decoder
+        recon_img = self.decoder(new_latent)
+
         return recon_img, mu, log_var
+

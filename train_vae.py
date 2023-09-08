@@ -91,12 +91,22 @@ print('num test_images:', len(test_ids))
 target_files = sorted([file for file in os.listdir(args.target_root) if file.endswith('.png')])
 target_ids, target_test_ids = split_dataset(target_files)
 
+import json
+
+with open('/home/qw3971/cnn-vae/run2_saccade.json', 'r') as json_file:
+    saccade_dict = json.load(json_file)
+
+# Convert the values (the saccade vectors) to tensors
+saccade_dict = {k: torch.tensor(v).float() for k, v in saccade_dict.items()} 
+
 # heavy cpu load, light memory load
 class ImageDiskLoader(torch.utils.data.Dataset):
 
-    def __init__(self, im_ids):
+    def __init__(self, im_ids, root, saccade_dict):
         self.transform = transform
         self.im_ids = im_ids
+        self.root = root
+        self.saccade_dict = saccade_dict
 
     def __len__(self):
         return len(self.im_ids)
@@ -105,14 +115,34 @@ class ImageDiskLoader(torch.utils.data.Dataset):
         im_path = args.dataset_root + self.im_ids[idx]
         im = Image.open(im_path).convert('RGB')
         #im = crop(im, 30, 0, 178, 178)
+        saccade_vector = self.saccade_dict[self.im_ids[idx]]
+        data = self.transform(im)
+
+        return data, self.im_ids[idx], saccade_vector
+    
+# heavy cpu load, light memory load
+class ImageDiskLoaderTarget(torch.utils.data.Dataset):
+
+    def __init__(self, im_ids, root):
+        self.transform = transform
+        self.im_ids = im_ids
+        self.root = root
+
+    def __len__(self):
+        return len(self.im_ids)
+
+    def __getitem__(self, idx):
+        im_path = self.root + self.im_ids[idx]
+        im = Image.open(im_path).convert('RGB')
+        #im = crop(im, 30, 0, 178, 178)
         data = self.transform(im)
 
         return data, self.im_ids[idx]
     
-data_train = ImageDiskLoader(train_ids)
-data_test = ImageDiskLoader(test_ids)
-data_target =  ImageDiskLoader(target_ids)
-data_target_test =  ImageDiskLoader(target_test_ids)
+data_train = ImageDiskLoader(train_ids, args.dataset_root, saccade_dict)
+data_test = ImageDiskLoader(test_ids, args.dataset_root, saccade_dict)
+data_target =  ImageDiskLoaderTarget(target_ids, args.target_root)
+data_target_test =  ImageDiskLoaderTarget(target_test_ids, args.target_root)
 
 kwargs = {'num_workers': 1,
           'pin_memory': True} if use_cuda else {}
@@ -124,7 +154,7 @@ target_test_loader = torch.utils.data.DataLoader(data_target_test, batch_size=ar
 
 # Get a test image batch from the test_loader to visualise the reconstruction quality etc
 dataiter = iter(test_loader)
-test_images, image_ids = next(dataiter) 
+test_images, image_ids, saccades = next(dataiter) 
 
 dataiter = iter(target_test_loader)
 target_test_images, target_test_image_ids = next(dataiter) 
@@ -159,15 +189,6 @@ if not os.path.isdir(args.save_dir + "/Recon"):
     os.makedirs(args.save_dir + "/Recon")
 if not os.path.isdir(args.save_dir + "/Original"):
     os.makedirs(args.save_dir + "/Original")
-
-import json
-
-with open('/home/qw3971/cnn-vae/run2_saccade.json', 'r') as json_file:
-    saccade_dict = json.load(json_file)
-
-# Convert to list and then to tensor
-saccade_list = [value for value in saccade_dict.values()]
-saccade_tensor = torch.tensor(saccade_list, dtype=torch.float32)
 
 for i in range(test_images.size(0)):
                         vutils.save_image(test_images[i],
@@ -214,19 +235,20 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
     total_batches = 0
 
     # Whether to train with SaccadeNet
-    train_with_saccade = epoch >= 1 
+    train_with_saccade = True
 
-    for i, ((images, ids), (target_images, target_ids)) in enumerate(tqdm(zip(train_loader, target_loader), 
+    for i, ((images, ids, saccades), (target_images, target_ids)) in enumerate(tqdm(zip(train_loader, target_loader), 
                                                             total = len(train_loader),  leave=False)):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
         target_images = target_images.to(device)
+        saccade = saccades.to(device)
         bs, c, h, w = images.shape
         
         # We will train with mixed precision!
         with torch.cuda.amp.autocast():
             if train_with_saccade:
-                recon_img, mu, log_var = vae_net(images, saccade_tensor)
+                recon_img, mu, log_var = vae_net(images, saccade)
 
             else:
                 dummy_saccade_data = torch.zeros_like(images)

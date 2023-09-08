@@ -156,6 +156,9 @@ class VAE(nn.Module):
     def forward(self, x, saccade_vectors):
         encoding, mu, log_var = self.encoder(x)
 
+        print(saccade_vectors.size())
+        print(mu.size())
+
          # Flatten encoding to a 1D vector
         mu_flat = mu.view(mu.size(0), -1)
         

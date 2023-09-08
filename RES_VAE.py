@@ -157,6 +157,7 @@ class VAE(nn.Module):
         encoding, mu, log_var = self.encoder(x)
 
         print(saccade_vectors.size())
+        print(saccade_vectors)
         print(mu.size())
 
          # Flatten encoding to a 1D vector

@@ -16,4 +16,4 @@ module load anaconda3/2022.5
 conda activate torch-env
 module load cudatoolkit/11.7
 
-python3 train_vae.py --mn test_run --dataset_root /home/qw3971/clevr/image_generation/test2/ --save_dir /home/qw3971/cnn-vae/retina_result/ --target_root /home/qw3971/clevr/image_generation/run2_transform_shifted/ --nepoch 50
+python3 train_vae.py -mn test_run --dataset_root /home/qw3971/clevr/image_generation/test2/ --save_dir /home/qw3971/cnn-vae/retina_result/ --target_root /home/qw3971/clevr/image_generation/run2_transform_shifted/ --nepoch 50

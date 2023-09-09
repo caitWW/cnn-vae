@@ -158,7 +158,7 @@ class VAE(nn.Module):
 
         print(saccade_vectors.size())
         print(saccade_vectors)
-        print(mu.size())
+        print(encoding.size())
 
          # Flatten encoding to a 1D vector
         mu_flat = mu.view(mu.size(0), -1)

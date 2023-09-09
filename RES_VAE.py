@@ -154,6 +154,8 @@ class VAE(nn.Module):
         self.saccade_net = SaccadeNet(latent_channels=latent_channels, saccade_dim=saccade_dim)
 
     def forward(self, x, saccade_vectors):
+        print(x.size())
+        
         encoding, mu, log_var = self.encoder(x)
 
         print(saccade_vectors.size())

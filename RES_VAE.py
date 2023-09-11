@@ -164,10 +164,17 @@ class VAE(nn.Module):
         print(saccade_vectors[0])
         print(encoding[0])
 
-        x = torch.cat((encoding, saccade_vectors), dim=1)
+        # Reshape the second tensor
+        
+        saccade_reshaped = saccade_vectors.unsqueeze(-1).unsqueeze(-1)
+        
+        # Expand the dimensions of the reshaped tensor to match those of tensor_4d
+        saccade_expanded = saccade_reshaped.expand(-1, -1, 12, 17)
+        
+        # Concatenate along the channel dimension (dim=1)
+        result = torch.cat((encoding, saccade_expanded), dim=1)
 
-        print(x.size())
-        print(x[0])
+        print(result.shape)
 
          # Flatten encoding to a 1D vector
         mu_flat = mu.view(mu.size(0), -1)

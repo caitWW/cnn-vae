@@ -159,8 +159,15 @@ class VAE(nn.Module):
         encoding, mu, log_var = self.encoder(x)
 
         print(saccade_vectors.size())
-        print(saccade_vectors)
         print(encoding.size())
+        
+        print(saccade_vectors[0])
+        print(encoding[0])
+
+        x = torch.cat((encoding, saccade_vectors), dim=1)
+
+        print(x.size())
+        print(x[0])
 
          # Flatten encoding to a 1D vector
         mu_flat = mu.view(mu.size(0), -1)

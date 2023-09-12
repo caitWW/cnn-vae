@@ -193,7 +193,7 @@ class VAE(nn.Module):
 
         print(result.shape)
 
-        model = FeedForwardNet().cuda()
+        model = FeedForwardNet()
         
         # Reshape the new latent back to the original mu shape
         new_latent = model(result)

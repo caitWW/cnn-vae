@@ -242,13 +242,12 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
         target_images = target_images.to(device)
-        saccade = saccades.to(device)
         bs, c, h, w = images.shape
         
         # We will train with mixed precision!
         with torch.cuda.amp.autocast():
             if train_with_saccade:
-                recon_img, mu, log_var = vae_net(images, saccade)
+                recon_img, mu, log_var = vae_net(images, saccades)
 
             else:
                 dummy_saccade_data = torch.zeros_like(images)

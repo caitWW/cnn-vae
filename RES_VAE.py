@@ -169,6 +169,7 @@ class VAE(nn.Module):
         print(x.size())
         
         encoding, mu, log_var = self.encoder(x)
+        saccade_vectors = saccade_vectors.cuda()
 
         print(saccade_vectors.size())
         print(encoding.size())

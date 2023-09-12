@@ -53,17 +53,30 @@ class ResUp(nn.Module):
 
         return self.act_fnc(self.bn2(x + skip))
     
-class SaccadeNet(nn.Module):
-    def __init__(self, latent_channels, saccade_dim):
-        super(SaccadeNet, self).__init__()
-        self.fc1 = nn.Linear(latent_channels + saccade_dim, latent_channels) # Adjust size as needed
-        self.fc2 = nn.Linear(latent_channels, latent_channels) # Adjust size as needed
-        self.act_fnc = nn.ReLU() # You can use another activation function if you prefer
+class FeedForwardNet(nn.Module):
+    def __init__(self):
+        super(FeedForwardNet, self).__init__()
+        
+        # Flatten the input tensor and compute its length
+        self.input_size = 258 * 12 * 17
+        self.output_size = 256 * 12 * 17
 
-    def forward(self, latent_vec, saccade_vec):
-        x = torch.cat((latent_vec, saccade_vec), dim=1)
-        x = self.act_fnc(self.fc1(x))
-        x = self.fc2(x)
+        # Define layers
+        self.layers = nn.Sequential(
+            nn.Linear(self.input_size, 4096),  # Example size for the hidden layer
+            nn.ReLU(),
+            nn.Linear(4096, self.output_size)
+        )
+
+    def forward(self, x):
+        # Flatten the input tensor
+        x = x.view(x.size(0), -1)
+        
+        # Feed-forward
+        x = self.layers(x)
+        
+        # Reshape back to the desired output shape
+        x = x.view(x.size(0), 256, 12, 17)
         return x
 
 
@@ -151,7 +164,6 @@ class VAE(nn.Module):
         
         self.encoder = Encoder(channel_in, ch=ch, latent_channels=latent_channels)
         self.decoder = Decoder(channel_in, ch=ch, latent_channels=latent_channels)
-        self.saccade_net = SaccadeNet(latent_channels=latent_channels, saccade_dim=saccade_dim)
 
     def forward(self, x, saccade_vectors):
         print(x.size())
@@ -176,14 +188,10 @@ class VAE(nn.Module):
 
         print(result.shape)
 
-         # Flatten encoding to a 1D vector
-        mu_flat = mu.view(mu.size(0), -1)
-        
-        # Pass the flattened mu and saccade through the SaccadeNet
-        new_latent_flat = self.saccade_net(mu_flat, saccade_vectors)
+        model = FeedForwardNet()
         
         # Reshape the new latent back to the original mu shape
-        new_latent = new_latent_flat.view(mu.size())
+        new_latent = model(result)
         
         # Pass the new latent vector through the decoder
         recon_img = self.decoder(new_latent)

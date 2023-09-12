@@ -237,7 +237,7 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
     # Whether to train with SaccadeNet
     train_with_saccade = True
 
-    for i, ((images, ids, saccades), (target_images, target_ids)) in enumerate(tqdm(zip(train_loader, target_loader), 
+    for i, ((images, ids, saccade_vec), (target_images, target_ids)) in enumerate(tqdm(zip(train_loader, target_loader), 
                                                             total = len(train_loader),  leave=False)):
         current_iter = i + epoch * len(train_loader)
         images = images.to(device)
@@ -247,7 +247,7 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
         # We will train with mixed precision!
         with torch.cuda.amp.autocast():
             if train_with_saccade:
-                recon_img, mu, log_var = vae_net(images, saccades)
+                recon_img, mu, log_var = vae_net(images, saccade_vec)
 
             else:
                 dummy_saccade_data = torch.zeros_like(images)
@@ -294,7 +294,7 @@ for epoch in trange(start_epoch, args.nepoch, leave=False):
         with torch.no_grad():
             with torch.cuda.amp.autocast():
                 # Save an example from testing and log a test loss
-                recon_img, mu, log_var = vae_net(test_images.to(device))
+                recon_img, mu, log_var = vae_net(test_images.to(device), saccades.to(device))
                 data_logger['test_mse_loss'].append(F.mse_loss(recon_img,
                                                                    target_test_images.to(device)).item())
 

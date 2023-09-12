@@ -189,9 +189,11 @@ class VAE(nn.Module):
         # Concatenate along the channel dimension (dim=1)
         result = torch.cat((encoding, saccade_expanded), dim=1)
 
+        print(result.device)
+
         print(result.shape)
 
-        model = FeedForwardNet()
+        model = FeedForwardNet().cuda()
         
         # Reshape the new latent back to the original mu shape
         new_latent = model(result)

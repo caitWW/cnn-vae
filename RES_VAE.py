@@ -175,6 +175,8 @@ class VAE(nn.Module):
         
         print(saccade_vectors[0])
         print(encoding[0])
+        print(encoding.device())
+        print(saccade_expanded.device())
 
         # Reshape the second tensor
         

@@ -175,8 +175,8 @@ class VAE(nn.Module):
         saccade_vectors = saccade_vectors.cuda()
         saccade_vectors_encoding = saccade_vectors.view(128, -1)
 
-        print(saccade_vectors_encoding.size())
-        print(reshaped_encoding.size()) 
+        print(saccade_vectors_encoding.shape)
+        print(reshaped_encoding.shape) 
 
         # Reshape the second tensor
         

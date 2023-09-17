@@ -169,15 +169,14 @@ class VAE(nn.Module):
         print(x.size())
         
         encoding, mu, log_var = self.encoder(x)
-        saccade_vectors = saccade_vectors.cuda()
 
-        print(saccade_vectors.size())
-        print(encoding.size())
-        
-        print(saccade_vectors[0])
-        print(encoding[0])
-        print(encoding.device)
-        print(saccade_vectors.device)
+        reshaped_encoding = encoding.view(128, -1)
+
+        saccade_vectors = saccade_vectors.cuda()
+        saccade_vectors_encoding = saccade_vectors.view(128, -1)
+
+        print(saccade_vectors_encoding.size())
+        print(reshaped_encoding.size()) 
 
         # Reshape the second tensor
         
@@ -189,9 +188,9 @@ class VAE(nn.Module):
         # Concatenate along the channel dimension (dim=1)
         result = torch.cat((encoding, saccade_expanded), dim=1)
 
-        print(result.device)
+        result2 = torch.cat((reshaped_encoding, saccade_vectors_encoding), dim=1)
 
-        print(result.shape)
+        print(result2.shape)
 
         model = FeedForwardNet().cuda()
         

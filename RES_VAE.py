@@ -58,7 +58,7 @@ class FeedForwardNet(nn.Module):
         super(FeedForwardNet, self).__init__()
         
         # Flatten the input tensor and compute its length
-        self.input_size = 258 * 12 * 17
+        self.input_size = 256 * 12 * 17 + 2
         self.output_size = 256 * 12 * 17
 
         # Define layers
@@ -170,10 +170,10 @@ class VAE(nn.Module):
         
         encoding, mu, log_var = self.encoder(x)
 
-        reshaped_encoding = encoding.view(128, -1)
+        reshaped_encoding = encoding.view(encoding.size(0), -1)
 
         saccade_vectors = saccade_vectors.cuda()
-        saccade_vectors_encoding = saccade_vectors.view(128, -1)
+        saccade_vectors_encoding = saccade_vectors.view(encoding.size(0), -1)
 
         print(saccade_vectors_encoding.shape)
         print(reshaped_encoding.shape) 
@@ -195,7 +195,7 @@ class VAE(nn.Module):
         model = FeedForwardNet().cuda()
         
         # Reshape the new latent back to the original mu shape
-        new_latent = model(result)
+        new_latent = model(result2)
         
         # Pass the new latent vector through the decoder
         recon_img = self.decoder(new_latent)
